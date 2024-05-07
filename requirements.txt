@@ -10,3 +10,6 @@ safetensors
 omegaconf
 peft
 gradio>=4.0.0
+firebase==4.0.1
+firebase-admin==6.5.0
+runpod==1.6.2

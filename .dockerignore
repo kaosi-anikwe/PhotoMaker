@@ -15,6 +15,7 @@ __pycache__
 
 # Exclude Python virtual environment
 /venv
+/env
 
 # Exclude output files
 /outputs
@@ -22,3 +23,6 @@ output*.png
 
 # Exclude models cache
 /models
+
+# Exclude test input
+/test_input.json

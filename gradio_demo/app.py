@@ -43,18 +43,15 @@ else:
     torch_dtype = torch.bfloat16
 
 pipe = PhotoMakerStableDiffusionXLPipeline.from_pretrained(
-    base_model_path, 
+    base_model_path,
     torch_dtype=torch_dtype,
-    use_safetensors=True, 
+    use_safetensors=True,
     variant="fp16",
     # local_files_only=True,
 ).to(device)
 
 pipe.load_photomaker_adapter(
-    os.path.dirname(photomaker_ckpt),
-    subfolder="",
-    weight_name=os.path.basename(photomaker_ckpt),
-    trigger_word="img"
+    os.path.dirname(photomaker_ckpt), subfolder="", weight_name=os.path.basename(photomaker_ckpt), trigger_word="img"
 )
 pipe.id_encoder.to(device)
 
@@ -62,8 +59,21 @@ pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
 # pipe.set_adapters(["photomaker"], adapter_weights=[1.0])
 pipe.fuse_lora()
 
+
 @spaces.GPU(enable_queue=True)
-def generate_image(upload_images, prompt, negative_prompt, aspect_ratio_name, style_name, num_steps, style_strength_ratio, num_outputs, guidance_scale, seed, progress=gr.Progress(track_tqdm=True)):
+def generate_image(
+    upload_images,
+    prompt,
+    negative_prompt,
+    aspect_ratio_name,
+    style_name,
+    num_steps,
+    style_strength_ratio,
+    num_outputs,
+    guidance_scale,
+    seed,
+    progress=gr.Progress(track_tqdm=True),
+):
     # check the trigger word
     image_token_id = pipe.tokenizer.convert_tokens_to_ids(pipe.trigger_word)
     input_ids = pipe.tokenizer.encode(prompt)
@@ -86,7 +96,7 @@ def generate_image(upload_images, prompt, negative_prompt, aspect_ratio_name, st
     input_id_images = []
     for img in upload_images:
         input_id_images.append(load_image(img))
-    
+
     generator = torch.Generator(device=device).manual_seed(seed)
 
     print("Start inference...")
@@ -109,31 +119,39 @@ def generate_image(upload_images, prompt, negative_prompt, aspect_ratio_name, st
     ).images
     return images, gr.update(visible=True)
 
+
 def swap_to_gallery(images):
     return gr.update(value=images, visible=True), gr.update(visible=True), gr.update(visible=False)
+
 
 def upload_example_to_gallery(images, prompt, style, negative_prompt):
     return gr.update(value=images, visible=True), gr.update(visible=True), gr.update(visible=False)
 
+
 def remove_back_to_files():
     return gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)
-    
+
+
 def remove_tips():
     return gr.update(visible=False)
+
 
 def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
     if randomize_seed:
         seed = random.randint(0, MAX_SEED)
     return seed
 
+
 def apply_style(style_name: str, positive: str, negative: str = ""):
     p, n = styles.get(style_name, styles[DEFAULT_STYLE_NAME])
     return p.replace("{prompt}", positive), n + ' ' + negative
+
 
 def get_image_path_list(folder_name):
     image_basename_list = os.listdir(folder_name)
     image_path_list = sorted([os.path.join(folder_name, basename) for basename in image_basename_list])
     return image_path_list
+
 
 def get_example():
     case = [
@@ -151,6 +169,7 @@ def get_example():
         ],
     ]
     return case
+
 
 ### Description and style
 logo = r"""
@@ -205,7 +224,7 @@ tips = r"""
 3. For **faster** speed, reduce the number of generated images and sampling steps. However, please note that reducing the sampling steps may compromise the ID fidelity.
 """
 # We have provided some generate examples and comparisons at: [this website]().
-# 3. Don't make the prompt too long, as we will trim it if it exceeds 77 tokens. 
+# 3. Don't make the prompt too long, as we will trim it if it exceeds 77 tokens.
 # 4. When generating realistic photos, if it's not real enough, try switching to our other gradio application [PhotoMaker-Realistic]().
 
 css = '''
@@ -222,82 +241,57 @@ with gr.Blocks(css=css) as demo:
     # )
     with gr.Row():
         with gr.Column():
-            files = gr.Files(
-                        label="Drag (Select) 1 or more photos of your face",
-                        file_types=["image"]
-                    )
+            files = gr.Files(label="Drag (Select) 1 or more photos of your face", file_types=["image"])
             uploaded_files = gr.Gallery(label="Your images", visible=False, columns=5, rows=1, height=200)
             with gr.Column(visible=False) as clear_button:
                 remove_and_reupload = gr.ClearButton(value="Remove and upload new ones", components=files, size="sm")
-            prompt = gr.Textbox(label="Prompt",
-                       info="Try something like 'a photo of a man/woman img', 'img' is the trigger word.",
-                       placeholder="A photo of a [man/woman img]...")
+            prompt = gr.Textbox(
+                label="Prompt",
+                info="Try something like 'a photo of a man/woman img', 'img' is the trigger word.",
+                placeholder="A photo of a [man/woman img]...",
+            )
             style = gr.Dropdown(label="Style template", choices=STYLE_NAMES, value=DEFAULT_STYLE_NAME)
-            aspect_ratio = gr.Dropdown(label="Output aspect ratio", choices=ASPECT_RATIO_LABELS, value=DEFAULT_ASPECT_RATIO)
+            aspect_ratio = gr.Dropdown(
+                label="Output aspect ratio", choices=ASPECT_RATIO_LABELS, value=DEFAULT_ASPECT_RATIO
+            )
             submit = gr.Button("Submit")
 
             with gr.Accordion(open=False, label="Advanced Options"):
                 negative_prompt = gr.Textbox(
-                    label="Negative Prompt", 
+                    label="Negative Prompt",
                     placeholder="low quality",
                     value="nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
                 )
-                num_steps = gr.Slider( 
-                    label="Number of sample steps",
-                    minimum=20,
-                    maximum=100,
-                    step=1,
-                    value=50,
-                )
-                style_strength_ratio = gr.Slider(
-                    label="Style strength (%)",
-                    minimum=15,
-                    maximum=50,
-                    step=1,
-                    value=20,
-                )
-                num_outputs = gr.Slider(
-                    label="Number of output images",
-                    minimum=1,
-                    maximum=4,
-                    step=1,
-                    value=2,
-                )
-                guidance_scale = gr.Slider(
-                    label="Guidance scale",
-                    minimum=0.1,
-                    maximum=10.0,
-                    step=0.1,
-                    value=5,
-                )
-                seed = gr.Slider(
-                    label="Seed",
-                    minimum=0,
-                    maximum=MAX_SEED,
-                    step=1,
-                    value=0,
-                )
+                num_steps = gr.Slider(label="Number of sample steps", minimum=20, maximum=100, step=1, value=50)
+                style_strength_ratio = gr.Slider(label="Style strength (%)", minimum=15, maximum=50, step=1, value=20)
+                num_outputs = gr.Slider(label="Number of output images", minimum=1, maximum=4, step=1, value=2)
+                guidance_scale = gr.Slider(label="Guidance scale", minimum=0.1, maximum=10.0, step=0.1, value=5)
+                seed = gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=0)
                 randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
         with gr.Column():
             gallery = gr.Gallery(label="Generated Images")
-            usage_tips = gr.Markdown(label="Usage tips of PhotoMaker", value=tips ,visible=False)
+            usage_tips = gr.Markdown(label="Usage tips of PhotoMaker", value=tips, visible=False)
 
         files.upload(fn=swap_to_gallery, inputs=files, outputs=[uploaded_files, clear_button, files])
         remove_and_reupload.click(fn=remove_back_to_files, outputs=[uploaded_files, clear_button, files])
 
-        submit.click(
-            fn=remove_tips,
-            outputs=usage_tips,            
-        ).then(
-            fn=randomize_seed_fn,
-            inputs=[seed, randomize_seed],
-            outputs=seed,
-            queue=False,
-            api_name=False,
+        submit.click(fn=remove_tips, outputs=usage_tips).then(
+            fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False
         ).then(
             fn=generate_image,
-            inputs=[files, prompt, negative_prompt, aspect_ratio, style, num_steps, style_strength_ratio, num_outputs, guidance_scale, seed],
-            outputs=[gallery, usage_tips]
+            inputs=[
+                files,
+                prompt,
+                negative_prompt,
+                aspect_ratio,
+                style,
+                num_steps,
+                style_strength_ratio,
+                num_outputs,
+                guidance_scale,
+                seed,
+            ],
+            outputs=[gallery, usage_tips],
         )
 
     gr.Examples(
@@ -307,7 +301,7 @@ with gr.Blocks(css=css) as demo:
         fn=upload_example_to_gallery,
         outputs=[uploaded_files, clear_button, files],
     )
-    
+
     gr.Markdown(article)
-    
+
 demo.launch(share=False)

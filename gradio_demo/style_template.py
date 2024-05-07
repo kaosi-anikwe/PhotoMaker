@@ -1,9 +1,5 @@
 style_list = [
-    {
-        "name": "(No style)",
-        "prompt": "{prompt}",
-        "negative_prompt": "",
-    },
+    {"name": "(No style)", "prompt": "{prompt}", "negative_prompt": ""},
     {
         "name": "Cinematic",
         "prompt": "cinematic still {prompt} . emotional, harmonious, vignette, highly detailed, high budget, bokeh, cinemascope, moody, epic, gorgeous, film grain, grainy",
@@ -53,7 +49,7 @@ style_list = [
         "name": "Line art",
         "prompt": "line art drawing {prompt} . professional, sleek, modern, minimalist, graphic, line art, vector graphics",
         "negative_prompt": "anime, photorealistic, 35mm film, deformed, glitch, blurry, noisy, off-center, deformed, cross-eyed, closed eyes, bad anatomy, ugly, disfigured, mutated, realism, realistic, impressionism, expressionism, oil, acrylic",
-    }
+    },
 ]
 
 styles = {k["name"]: (k["prompt"], k["negative_prompt"]) for k in style_list}
