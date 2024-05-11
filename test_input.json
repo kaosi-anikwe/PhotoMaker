@@ -1,9 +1,0 @@
-{
-  "input": {
-    "prompt": "sci-fi, closeup portrait photo of a man img wearing the sunglasses in Iron man suit, face, slim body, high quality, film grain",
-    "negative_prompt": "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, asymmetry, 3d, 2d, painting, cartoons, sketch, open mouth",
-    "input_image_urls": [
-      "https://images.pexels.com/photos/1559486/pexels-photo-1559486.jpeg?auto=compress&cs=tinysrgb&w=600"
-    ]
-  }
-}
