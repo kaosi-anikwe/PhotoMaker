@@ -11,6 +11,9 @@ COPY . /src
 RUN pip install diffusers
 RUN pip install accelerate
 RUN pip install pip install git+https://github.com/TencentARC/PhotoMaker.git
+RUN pip install transformers==4.36.2
+RUN pip install torchvision==0.15.2
+RUN pip install firebase-admin
 RUN pip install -r requirements.txt
 
 # Command to run the Python script

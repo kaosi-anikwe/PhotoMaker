@@ -1,13 +1,13 @@
-torch==2.0.1
-torchvision==0.15.2
-transformers==4.36.2
-huggingface-hub==0.20.2
+# torch==2.0.1
+# torchvision==0.15.2
+# transformers==4.36.2
+# huggingface-hub==0.20.2
 spaces==0.19.4
 numpy
 safetensors
 omegaconf
 peft
 gradio
-firebase==4.0.1
-firebase-admin==6.5.0
-runpod
+# firebase==4.0.1
+# firebase-admin==6.5.0
+# runpod
